@@ -4,26 +4,12 @@
 		<meta charset="utf-8">
 		<title>CebulaPlotter by zbigniewcebula (2018)</title>
 		<script>
-			var module	= {};
+			if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
+				alert('Browser does not support reading external files!');
+			}
 		</script>
 		<script src="bower_components/three.js/build/three.min.js"></script>
-		<style>
-			body {
-				margin:				0px 0px 0px 0px;
-				padding:			0px 0px 0px 0px;
-				background-color:	black;
-			}
-			#logo_div {
-				z-index:			100;
-				position:			fixed;
-				right:				1%;
-				bottom:				1%;
-				width:				5%;
-			}
-			#logo {
-				width:				100%;
-			}
-		</style>
+		<link rel="stylesheet" type="text/css" href="style.css">
 	</head>
 	<body>
 		<div id="container">
@@ -33,6 +19,16 @@
 				<img id="logo" src="http://onionmilk.org/img/logo_icon.png" alt="OnionMilk.org" />
 			</a>
 		</div>
+		<div id="data_div">
+			<div id="upload_div">
+				<label for="upload">
+					<img id="upload_icon" src="./upload_icon.png" alt="UPLOAD" />
+				</label>
+				<input id="upload" type="file" name="uploadedFile"/>
+			</div>
+			<div id="upload_info"></div>
+		</div>
+		<div id="log"></div>
 	</body>
 	<script src="main.js"></script>
 </html>

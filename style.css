@@ -1,0 +1,75 @@
+body {
+	margin:				0px 0px 0px 0px;
+	padding:			0px 0px 0px 0px;
+	background-color:	black;
+}
+#logo_div {
+	z-index:			100;
+	position:			fixed;
+	right:				1%;
+	bottom:				1%;
+	width:				5%;
+}
+#logo {
+	width:				100%;
+}
+
+#upload_div {
+	width:				15%;
+
+	-webkit-transition-property:		width;
+	-webkit-transition-duration:		0.1s;
+	-webkit-transition-timing-function:	linear;
+	
+	transition-property:				width;
+	transition-duration:				0.1s;
+	transition-timing-function:			linear;
+}
+#upload_div:hover {
+	width:				30%;
+}
+
+#upload_info {
+	font-size:			0.75em;
+
+	-webkit-transition-property:		font-size;
+	-webkit-transition-duration:		0.1s;
+	-webkit-transition-timing-function:	linear;
+	
+	transition-property:				font-size;
+	transition-duration:				0.1s;
+	transition-timing-function:			linear;
+}
+#upload_info:hover {
+	font-size:			2em;
+}
+
+#upload_div > input {
+	display:			none;
+}
+#upload_icon {
+	z-index:			100;
+	width:				100%;
+}
+#data_div {
+	display:			block;
+	z-index:			100;
+
+	position:			fixed;
+	left:				1%;
+	top:				1%;
+	width:				25%;
+
+	color:				white;
+}
+#log {
+	display:			block;
+	z-index:			100;
+
+	position:			fixed;
+	left:				1%;
+	bottom:				1%;
+	width:				25%;
+
+	color:				white;
+}

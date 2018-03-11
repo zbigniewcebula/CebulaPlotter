@@ -25,8 +25,12 @@ var mouse	= {
 };
 var pressedKey	= {};
 
+var loadedFile	= null;
+
+var logEntries	= new Array();
+
 function lerp(a,  b,  t) {
-    return a + t * (b - a);
+	return a + t * (b - a);
 }
 
 function onMouseMove(event) {
@@ -63,10 +67,95 @@ function onKeyUp(event) {
 	pressedKey[event.keyCode]		= false;
 }
 
+function processFile() {
+	var msg	= "";
+	if (loadedFile != null) {
+		addLogEntry("FileUpload", "Loading file...");
+		msg		+= "<table>";
+		msg		+= "<tr><td><b>File name: </b></td><td>";
+		msg		+= escape(loadedFile.name) + "</td></tr>";
+		msg		+= "<tr><td><b>File type: </b> </td><td>";
+		msg		+= loadedFile.type + "</td></tr>";
+
+		var	units	= ["B", "kB", "MB", "GB"];
+		var	unit	= 0;
+		var size	= loadedFile.size;
+		unit		= Math.floor(size / 1024);
+		if (unit >= units.length)	unit = units.length - 1;
+		for(var i = 0; i < units; ++i) {
+			size	/= 1024;
+		}
+
+		msg		+= "<tr><td><b>File size: </b> </td><td>" + size + " " + units[unit] + "</td></tr>";
+
+		msg		+= "</table>";
+		document.getElementById("upload_info").innerHTML = msg;
+
+		loadedFile.data	= null;
+		var	reader		= new FileReader();
+		reader.onload	= function(e) {
+			loadedFile.data	= e.target.result;
+			var _msg		= document.getElementById("upload_info").innerHTML;
+			_msg			+= "<b>File is ready!!!</b><br />";
+			addLogEntry("FileUpload", "File loaded succesfully!");
+			document.getElementById("upload_info").innerHTML	= _msg;
+		};
+		reader.readAsText(loadedFile);
+	}
+}
+
+function onDragOver(event) {
+	event.stopPropagation();
+	event.preventDefault();
+	event.dataTransfer.dropEffect	= 'copy';
+}
+function onDropFile(event) {
+	event.stopPropagation();
+	event.preventDefault();
+
+	loadedFile	= event.dataTransfer.files[0];
+	if (loadedFile.type == "text/plain") {
+		processFile();
+	} else {
+		addLogEntry("FileUpload", "Failed, incorrect type => " + loadedFile.type);
+		loadedFile	= null;
+		alert("File has incorrect type!");
+	}
+}
+function onLoadFile(event) {
+	loadedFile	= event.target.files[0];
+	if (loadedFile.type == "text/plain") {
+		processFile();
+	} else {
+		addLogEntry("FileUpload", "Failed, incorrect type => " + loadedFile.type);
+		loadedFile	= null;
+		alert("File has incorrect type!");
+	}
+}
+
 function restartCamera() {
 	cameraCenterPos.set(0, 0, 0);
 	theta	= Math.PI / 4;
 	phi		= Math.PI / 4;
+	addLogEntry("Camera", "Camera position and rotation reset.");
+}
+
+function addLogEntry(title, msg) {
+	logEntries.push([
+		"[" + title + "]", msg
+	]);
+	var	content	= "<table>";
+	for(var i = 10; i < 10; ++i) {
+		if ((logEntries.length - i) < 0)	continue;
+		content	+= "<tr>";
+
+		content	+= "<td>" + logEntries[logEntries.length - i][0] + "</td>";		
+		content	+= "<td>" + logEntries[logEntries.length - i][1] + "</td>";		
+
+		content	+= "</tr>";
+	}
+	content		+= "</table>";
+	document.getElementById("log").innerHTML	= content;
 }
 
 function init() {
@@ -92,6 +181,8 @@ function init() {
 
 	axes.position.set(0, 0.05, 0);
 
+	processFile();
+
 	var sphere;
 	sphere = new THREE.Mesh(
 		new THREE.SphereGeometry(10, 16, 8),
@@ -115,6 +206,12 @@ function init() {
 	document.addEventListener("keyup", onKeyUp, false);
 	document.addEventListener("onkeydown", onKeyDown, false);
 	document.addEventListener("onkeyup", onKeyUp, false);
+
+	container.addEventListener('dragover', onDragOver, false);
+	container.addEventListener('drop', onDropFile, false);
+
+	document.getElementById('upload')
+		.addEventListener('change', onLoadFile, false);
 }
 
 var deltaTime	= 0;
@@ -135,7 +232,7 @@ function update(timestamp) {
 		}
 		
 	}
-	
+
 	var camLookDir		= cameraCenterPos.clone().sub(cameraTargetPos).normalize();
 	var camLookDirXZF	= new THREE.Vector3(camLookDir.x, 0, camLookDir.z);
 	var camLookDirXZR	= camLookDirXZF.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), (22.5 + 45));
@@ -170,13 +267,16 @@ function update(timestamp) {
 		radius	+= deltaTime * 50 * (pressedKey[16]? 2: 1);
 	}
 
+	if (radius < 5) {
+		radius	= 5;
+	}
 	cameraTargetPos	= cameraCenterPos.clone().add((new THREE.Vector3(
 		Math.cos(theta), Math.sin(phi), Math.sin(theta)
 	)).multiplyScalar(radius));
 
-	camera.position.x = lerp(camera.position.x, cameraTargetPos.x, deltaTime * 10);
-	camera.position.y = lerp(camera.position.y, cameraTargetPos.y, deltaTime * 10);
-	camera.position.z = lerp(camera.position.z, cameraTargetPos.z, deltaTime * 10);
+	camera.position.x	= lerp(camera.position.x, cameraTargetPos.x, deltaTime * 15);
+	camera.position.y	= lerp(camera.position.y, cameraTargetPos.y, deltaTime * 15);
+	camera.position.z	= lerp(camera.position.z, cameraTargetPos.z, deltaTime * 15);
 	grid.position.set(Math.floor(camera.position.x / 10) * 10, 0.01, Math.floor(camera.position.z / 10) * 10);
 	camera.lookAt(cameraCenterPos);
 	renderer.render(scene, camera);
