@@ -50,12 +50,13 @@ function onMouseUp(event) {
 }
 function onMouseWheel(event) {
 	mouse.wheel	= ((event.deltaY || -event.wheelDelta || event.detail)) || 1;
-	radius		+= mouse.wheel;
+	radius		+= mouse.wheel * (pressedKey[16]? 2: 1);
 }
 
 function onKeyDown(event) {
 	event			= window.event? window.event: event;
 	pressedKey[event.keyCode]		= true;
+	//console.log(event.keyCode);
 }
 function onKeyUp(event) {
 	event			= window.event? window.event: event;
@@ -76,7 +77,7 @@ function init() {
 	phi				= 0;
 
 	container	= document.getElementById('container');
-	camera		= new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight * 0.98), 1, 1000);
+	camera		= new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight * 0.98), 1, 10000);
 	moveSpeed	= 100;
 	restartCamera();
 	scene		= new THREE.Scene();
@@ -85,11 +86,11 @@ function init() {
 	container.appendChild(renderer.domElement);
 
 	grid		= new THREE.GridHelper(1000, 100);
-	axes		= new THREE.AxesHelper(1000);
+	axes		= new THREE.AxesHelper(5000);
 	scene.add(axes);
 	scene.add(grid);
 
-	axes.position.set(0, 0.01, 0);
+	axes.position.set(0, 0.05, 0);
 
 	var sphere;
 	sphere = new THREE.Mesh(
@@ -134,21 +135,39 @@ function update(timestamp) {
 		}
 		
 	}
-
+	
 	var camLookDir		= cameraCenterPos.clone().sub(cameraTargetPos).normalize();
 	var camLookDirXZF	= new THREE.Vector3(camLookDir.x, 0, camLookDir.z);
 	var camLookDirXZR	= camLookDirXZF.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), (22.5 + 45));
 
-	if (pressedKey["W".charCodeAt(0)]) {
-		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(deltaTime * moveSpeed));
-	} else if (pressedKey["S".charCodeAt(0)]) {
-		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(deltaTime * -moveSpeed));
+	if (pressedKey["W".charCodeAt(0)] || pressedKey[38]) {
+		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(
+			deltaTime * moveSpeed * (pressedKey[16]? 2: 1)
+		));
+	} else if (pressedKey["S".charCodeAt(0)] || pressedKey[40]) {
+		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(
+			deltaTime * -moveSpeed * (pressedKey[16]? 2: 1)
+		));
 	}
 
-	if (pressedKey["A".charCodeAt(0)]) {
-		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(deltaTime * -moveSpeed));
-	} else if (pressedKey["D".charCodeAt(0)]) {
-		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(deltaTime * moveSpeed));
+	if (pressedKey["A".charCodeAt(0)] || pressedKey[37]) {
+		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(
+			deltaTime * -moveSpeed * (pressedKey[16]? 2: 1)
+		));
+	} else if (pressedKey["D".charCodeAt(0)] || pressedKey[39]) {
+		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(
+			deltaTime * moveSpeed * (pressedKey[16]? 2: 1)
+		));
+	}
+
+	if (pressedKey[" ".charCodeAt(0)]) {
+		restartCamera();
+	}
+
+	if (pressedKey[107] || pressedKey[61]) {	//+
+		radius	-= deltaTime * 50 * (pressedKey[16]? 2: 1);
+	} else if (pressedKey[109] || pressedKey[173]) {	//-
+		radius	+= deltaTime * 50 * (pressedKey[16]? 2: 1);
 	}
 
 	cameraTargetPos	= cameraCenterPos.clone().add((new THREE.Vector3(
@@ -158,6 +177,7 @@ function update(timestamp) {
 	camera.position.x = lerp(camera.position.x, cameraTargetPos.x, deltaTime * 10);
 	camera.position.y = lerp(camera.position.y, cameraTargetPos.y, deltaTime * 10);
 	camera.position.z = lerp(camera.position.z, cameraTargetPos.z, deltaTime * 10);
+	grid.position.set(Math.floor(camera.position.x / 10) * 10, 0.01, Math.floor(camera.position.z / 10) * 10);
 	camera.lookAt(cameraCenterPos);
 	renderer.render(scene, camera);
 
