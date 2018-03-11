@@ -29,6 +29,7 @@ var pressedKey	= {};
 
 var loadedFile	= null;
 var parsedData	= null;
+var raycastable	= null;
 
 var spreadSize	= 0;
 
@@ -115,7 +116,7 @@ function processFile() {
 			loadedFile.data	= e.target.result;
 			var _msg		= document.getElementById("upload_info").innerHTML;
 			_msg			+= "<b>File is ready!!!</b><br />";
-			addLogEntry("FileUpload", "File loaded succesfully!");
+			addLogEntry("FileUpload", "File loaded successfully!");
 			document.getElementById("upload_info").innerHTML	= _msg;
 
 			if (loadedFile.type == "text/plain") {
@@ -129,7 +130,11 @@ function processFile() {
 function processTXT() {
 	if (loadedFile != null) {
 		if (loadedFile.data != null) {
+			clearScene();
+
 			var	tempData	= new Array();
+			raycastable		= new Array();
+
 			var	lines		= loadedFile.data.split("\r\n");
 			var line		= null;
 
@@ -142,8 +147,7 @@ function processTXT() {
 				if (lines[l].length > 0) {
 					line	= lines[l].split(" ");
 					if (line.length == 6) {
-						console.log(line);
-						var geometry	= new THREE.SphereGeometry(1, 6, 5);
+						var geometry	= new THREE.SphereGeometry(10 / lines.length, 6, 5);
 						var material	= new THREE.MeshLambertMaterial({
 							color:	0xFFFFFF
 						});
@@ -152,6 +156,7 @@ function processTXT() {
 						sphere.position.x	= parseFloat(line[0]) * spreadSize;
 						sphere.position.y	= parseFloat(line[1]) * spreadSize;
 						sphere.position.z	= parseFloat(line[2]) * spreadSize;
+						sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
 
 						var geo				= new THREE.EdgesGeometry(geometry);
 						var mat				= new THREE.LineBasicMaterial({
@@ -162,12 +167,14 @@ function processTXT() {
 						wireframe.position.x	= sphere.position.x;
 						wireframe.position.y	= sphere.position.y;
 						wireframe.position.z	= sphere.position.z;
+						wireframe.name			= "WIRE_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
 
 						tempData.push({
 							mesh:	sphere,
 							wire:	wireframe,
 							added:	false
 						});
+						raycastable.push(sphere);
 
 						success	+= 1;
 
@@ -235,6 +242,95 @@ function processTXT() {
 	}
 }
 
+function generateRandomSet(amount) {
+	clearScene();
+
+	var	tempData	= new Array();
+	raycastable		= new Array();
+
+	var	success		= 0;
+	var	fail		= 0;
+	
+	var max			= new Array(3);
+	var min			= new Array(3);
+	for(var l = 0; l < amount; ++l) {
+		var geometry	= new THREE.SphereGeometry(10 / amount, 6, 5);
+		var material	= new THREE.MeshLambertMaterial({
+			color:	0xFFFFFF
+		});
+		material.color		= new THREE.Color(Math.random(), Math.random(), Math.random());
+		var sphere			= new THREE.Mesh(geometry, material);
+		sphere.position.x	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
+		sphere.position.y	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
+		sphere.position.z	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
+		sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
+
+		var geo				= new THREE.EdgesGeometry(geometry);
+		var mat				= new THREE.LineBasicMaterial({
+			color: 0xffffff,
+			linewidth: 5
+		});
+		var wireframe			= new THREE.LineSegments(geo, mat);
+		wireframe.position.x	= sphere.position.x;
+		wireframe.position.y	= sphere.position.y;
+		wireframe.position.z	= sphere.position.z;
+		wireframe.name			= "WIRE_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
+
+		tempData.push({
+			mesh:	sphere,
+			wire:	wireframe,
+			added:	false
+		});
+		raycastable.push(sphere);
+
+		success	+= 1;
+
+		if (success == 1) {
+			max[0]	= sphere.position.x;
+			max[1]	= sphere.position.y;
+			max[2]	= sphere.position.z;
+
+			min[0]	= sphere.position.x;
+			min[1]	= sphere.position.y;
+			min[2]	= sphere.position.z;
+		} else {
+			max[0]	= Math.max(max[0], sphere.position.x);
+			max[1]	= Math.max(max[1], sphere.position.y);
+			max[2]	= Math.max(max[2], sphere.position.z);
+
+			min[0]	= Math.min(min[0], sphere.position.x);
+			min[1]	= Math.min(min[1], sphere.position.y);
+			min[2]	= Math.min(min[2], sphere.position.z);
+		}
+	}
+	addLogEntry("RandomSet", "Generated points: " + amount);
+
+	var	_msg	= "<table>";
+
+	_msg	+= "<tr>";
+	_msg		+= "<td><b>Total amount: </b></td><td><b>" + success + "</b></td></td>";
+	_msg	+= "</tr>";
+	_msg	+= "<tr>";
+	_msg		+= "<td>Failed amount: </b></td><td>0 (sic!)</td>";
+	_msg	+= "</tr>";
+	_msg	+= "<tr>";
+	_msg		+= "<td>Success amount: </b></td><td>" + success + "</td>";
+	_msg	+= "</tr>";
+
+	_msg	+= "<tr></tr>";
+
+	_msg	+= "<tr>";
+	_msg		+= "<td>Minimals: </b></td><td>" + min[0] + ";" + min[1] + ";" + min[2] + "</td>";
+	_msg	+= "</tr>";
+	_msg	+= "<tr>";
+	_msg		+= "<td>Maximals: </b></td><td>" + max[0] + ";" + max[1] + ";" + max[2] + "</td>";
+	_msg	+= "</tr>";
+
+	_msg		+= "</table>";
+	document.getElementById("parse_info").innerHTML	= _msg;
+	return tempData;
+}
+
 function onDragOver(event) {
 	event.stopPropagation();
 	event.preventDefault();
@@ -271,6 +367,63 @@ function restartCamera() {
 	if (lastLogHash != 0) {
 		addLogEntry("Camera", "Camera position and rotation reset.");
 	}
+}
+
+function clearScene() {
+	if (parsedData != null) {
+		for(var i = 0; i < parsedData.length; ++i) {
+			scene.remove(parsedData.wire);
+			scene.remove(parsedData.mesh);
+		}
+		parsedData		= null;
+		raycastable		= null;
+		addLogEntry("Scene", "Cleared successfully.");
+	}
+}
+
+function processRay(object) {
+	if (object == null) {
+		document.getElementById('ray_info').style.display	= "none";
+		return;
+	}
+	if (object.name.substring(0, 6) != "POINT_") {
+		document.getElementById('ray_info').style.display	= "none";
+		return;
+	}
+	var	content	= "<table>";
+	content		+= "<tr>";
+	content		+= "<td>Position: </td>";
+	content		+= "</tr>";
+	content		+= "<tr>";
+	content		+= "<td></td>";
+	content		+= "<td>X: </td>";
+	content		+= "<td>" + object.position.x + "</td>";
+	content		+= "<td>Y: </td>";
+	content		+= "<td>" + object.position.y + "</td>";
+	content		+= "<td>Z: </td>";
+	content		+= "<td>" + object.position.z + "</td>";
+	content		+= "</tr>";
+
+	content		+= "<tr>";
+	content		+= "<td>Color: </td>";
+	content		+= "</tr>";
+	content		+= "<tr>";
+	content		+= "<td></td>";
+	content		+= "<td>X: </td>";
+	content		+= "<td>" + Math.floor(object.material.color.r * 255) + "</td>";
+	content		+= "<td>Y: </td>";
+	content		+= "<td>" + Math.floor(object.material.color.g * 255) + "</td>";
+	content		+= "<td>Z: </td>";
+	content		+= "<td>" + Math.floor(object.material.color.b * 255) + "</td>";
+	content		+= "</tr>";
+
+	content	+= "</table>";
+
+	document.getElementById('ray_info').style.position	= "fixed";
+	document.getElementById('ray_info').style.display	= "block";
+	document.getElementById('ray_info').style.left		= (20 + mouse.x) + "px";
+	document.getElementById('ray_info').style.top		= (20 + mouse.y) + "px";
+	document.getElementById('ray_info').innerHTML		= content;
 }
 
 function addLogEntry(title, msg) {
@@ -321,7 +474,7 @@ function init() {
 	container	= document.getElementById('container');
 	scene		= new THREE.Scene();
 	renderer	= new THREE.WebGLRenderer();
-	camera		= new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight * 0.98), 1, 10000);
+	camera		= new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight * 0.98), 0.1, 10000);
 	moveSpeed	= 10;
 	setSpreadSize(10);
 	restartCamera();
@@ -358,6 +511,14 @@ function init() {
 
 
 	addLogEntry("Global", "Application inited.");
+	addLogEntry("Instruction",
+		"To start drag and drop file on plot area or use icon in top-left corner!<br />"
+		+	"Movement is done by using WSAD+QE or Arrow keys+PageUp/PageDown.<br />"
+		+	"Also I didn't forget about mouse, hold left mouse button and try to move around!<br />"
+		+	"Scroll Wheel let's you zoom in and out, same as + and - buttons!<br />"
+		+	"Shift key makes movement faster!!!<br />"
+	);
+	addLogEntry("Global", "Made by zbigniewcebula (2018)");
 }
 
 var deltaTime	= 0;
@@ -374,6 +535,22 @@ function update(timestamp) {
 				scene.add(parsedData[i].mesh);
 				scene.add(parsedData[i].wire);
 			}
+		}
+	}
+
+	//Raycasting
+	if (raycastable != null) {
+		var	rayMouse	= new THREE.Vector2(mouse.relX, mouse.relY);
+		raycaster.setFromCamera(rayMouse, camera);
+		var intersects	= raycaster.intersectObjects(raycastable);
+		if (intersects != null) {
+			if (intersects.length > 0) {
+				processRay(intersects[0].object);
+			} else {
+				processRay(null);
+			}
+		} else {
+			processRay(null);
 		}
 	}
 
@@ -415,8 +592,18 @@ function update(timestamp) {
 		));
 	}
 
+	if (pressedKey["Q".charCodeAt(0)] || pressedKey[37]) {
+		cameraCenterPos.y	+= deltaTime * -moveSpeed * (pressedKey[16]? 2: 1);
+	} else if (pressedKey["E".charCodeAt(0)] || pressedKey[39]) {
+		cameraCenterPos.y	+= deltaTime * moveSpeed * (pressedKey[16]? 2: 1);
+	}
+
 	if (pressedKey[" ".charCodeAt(0)]) {
 		restartCamera();
+	}
+
+	if (pressedKey[192] && parsedData == null) {	//`
+		parsedData	= generateRandomSet(100);
 	}
 
 	if (pressedKey[107] || pressedKey[61]) {	//+
