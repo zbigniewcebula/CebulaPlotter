@@ -44,6 +44,25 @@ body {
 	font-size:			2em;
 }
 
+#parse_info {
+	font-size:			0.75em;
+
+	-webkit-transition-property:		font-size;
+	-webkit-transition-duration:		0.1s;
+	-webkit-transition-timing-function:	linear;
+	
+	transition-property:				font-size;
+	transition-duration:				0.1s;
+	transition-timing-function:			linear;
+}
+#parse_info:hover {
+	font-size:			2em;
+}
+
+#ray_info {
+	font-size:			2em;
+}
+
 #upload_div > input {
 	display:			none;
 }
