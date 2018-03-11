@@ -79,7 +79,7 @@ function onMouseWheel(event) {
 function onKeyDown(event) {
 	event			= window.event? window.event: event;
 	pressedKey[event.keyCode]		= true;
-	//console.log(event.keyCode);
+	console.log(event.keyCode);
 }
 function onKeyUp(event) {
 	event			= window.event? window.event: event;
@@ -592,9 +592,9 @@ function update(timestamp) {
 		));
 	}
 
-	if (pressedKey["Q".charCodeAt(0)] || pressedKey[37]) {
+	if (pressedKey["Q".charCodeAt(0)] || pressedKey[34]) {
 		cameraCenterPos.y	+= deltaTime * -moveSpeed * (pressedKey[16]? 2: 1);
-	} else if (pressedKey["E".charCodeAt(0)] || pressedKey[39]) {
+	} else if (pressedKey["E".charCodeAt(0)] || pressedKey[33]) {
 		cameraCenterPos.y	+= deltaTime * moveSpeed * (pressedKey[16]? 2: 1);
 	}
 
