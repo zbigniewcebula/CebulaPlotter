@@ -8,9 +8,15 @@ var raycaster;
 
 var axes;
 var grid;
+var localGrid;
+
+var importantStuff;
+var importantStuffX;
+var importantTimer;
 
 var cameraTargetPos;
 var cameraCenterPos;
+var cameraFocusPos;
 var radius;
 var theta;
 var phi;
@@ -73,7 +79,7 @@ function onMouseUp(event) {
 }
 function onMouseWheel(event) {
 	mouse.wheel	= ((event.deltaY || -event.wheelDelta || event.detail)) || 1;
-	radius		+= mouse.wheel * (pressedKey[16]? 0.5: 0.25);
+	radius		+= mouse.wheel * (pressedKey[16]? 0.2: 0.1);
 }
 
 function onKeyDown(event) {
@@ -147,7 +153,7 @@ function processTXT() {
 				if (lines[l].length > 0) {
 					line	= lines[l].split(" ");
 					if (line.length == 6) {
-						var geometry	= new THREE.SphereGeometry(10 / lines.length, 6, 5);
+						var geometry	= new THREE.SphereGeometry(spreadSize / lines.length, 6, 5);
 						var material	= new THREE.MeshLambertMaterial({
 							color:	0xFFFFFF
 						});
@@ -254,7 +260,7 @@ function generateRandomSet(amount) {
 	var max			= new Array(3);
 	var min			= new Array(3);
 	for(var l = 0; l < amount; ++l) {
-		var geometry	= new THREE.SphereGeometry(10 / amount, 6, 5);
+		var geometry	= new THREE.SphereGeometry(spreadSize / amount, 6, 5);
 		var material	= new THREE.MeshLambertMaterial({
 			color:	0xFFFFFF
 		});
@@ -361,6 +367,7 @@ function onLoadFile(event) {
 }
 
 function restartCamera() {
+	cameraFocusPos	= new THREE.Vector3(spreadSize / 2, 0, spreadSize / 2);
 	cameraCenterPos.set(spreadSize / 2, 0, spreadSize / 2);
 	theta	= Math.PI / 4;
 	phi		= Math.PI / 4;
@@ -371,9 +378,15 @@ function restartCamera() {
 
 function clearScene() {
 	if (parsedData != null) {
+		var	obj	= null;
 		for(var i = 0; i < parsedData.length; ++i) {
-			scene.remove(parsedData.wire);
-			scene.remove(parsedData.mesh);
+			scene.remove(parsedData[i].wire);
+			parsedData[i].wire	= null;
+
+			parsedData[i].mesh.material.dispose();
+			parsedData[i].mesh.geometry.dispose();
+			scene.remove(parsedData[i].mesh);
+			parsedData[i].mesh	= null;
 		}
 		parsedData		= null;
 		raycastable		= null;
@@ -450,12 +463,19 @@ function addLogEntry(title, msg) {
 function setSpreadSize(size) {
 	spreadSize		= size;
 
-	grid			= new THREE.GridHelper(spreadSize, 100 / spreadSize);
+	grid			= new THREE.GridHelper(spreadSize, spreadSize);
 	grid.position.x	= spreadSize / 2;
 	grid.position.z	= spreadSize / 2;
 	grid.name		= "GRID";
 	scene.remove("GRID");
 	scene.add(grid);
+
+	localGrid				= new THREE.GridHelper(spreadSize / 5, spreadSize);
+	localGrid.position.x	= spreadSize / 2;
+	localGrid.position.z	= spreadSize / 2;
+	localGrid.name			= "LOCALGRID";
+	scene.remove("LOCALGRID");
+	scene.add(localGrid);
 
 	axes		= new THREE.AxesHelper(spreadSize);
 	axes.position.set(0, 0.05, 0);
@@ -476,7 +496,7 @@ function init() {
 	renderer	= new THREE.WebGLRenderer();
 	camera		= new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight * 0.98), 0.1, 10000);
 	moveSpeed	= 10;
-	setSpreadSize(10);
+	setSpreadSize(20);
 	restartCamera();
 	renderer.setSize(window.innerWidth, (window.innerHeight * 0.98));
 	container.appendChild(renderer.domElement);
@@ -506,10 +526,12 @@ function init() {
 	container.addEventListener('dragover', onDragOver, false);
 	container.addEventListener('drop', onDropFile, false);
 
+	//Controls
 	document.getElementById('upload')
 		.addEventListener('change', onLoadFile, false);
 
 
+	//Init message
 	addLogEntry("Global", "Application inited.");
 	addLogEntry("Instruction",
 		"To start drag and drop file on plot area or use icon in top-left corner!<br />"
@@ -572,48 +594,63 @@ function update(timestamp) {
 	var camLookDirXZF	= new THREE.Vector3(camLookDir.x, 0, camLookDir.z);
 	var camLookDirXZR	= camLookDirXZF.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), (22.5 + 45));
 
+
+	if (radius < 0) {
+		radius	= 0.01;
+	}
+	var radiusSpeedMod	= 1;
+	if (radius <= 1.5) {
+		radiusSpeedMod	= 0.25;
+	} else if (radius <= 5) {
+		radiusSpeedMod	= 0.25;
+	} else if (radius <= 15) {
+		radiusSpeedMod	= 0.5;
+	}
+
+	var	speed			= radiusSpeedMod * (pressedKey[16]? 2: 1);
 	if (pressedKey["W".charCodeAt(0)] || pressedKey[38]) {
-		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(
-			deltaTime * moveSpeed * (pressedKey[16]? 2: 1)
-		));
+		speed		*= deltaTime * moveSpeed;
+		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(speed));
 	} else if (pressedKey["S".charCodeAt(0)] || pressedKey[40]) {
-		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(
-			deltaTime * -moveSpeed * (pressedKey[16]? 2: 1)
-		));
+		speed		*= deltaTime * -moveSpeed;
+		cameraCenterPos.add(camLookDirXZF.clone().multiplyScalar(speed));
 	}
 
+	speed	= radiusSpeedMod * (pressedKey[16]? 2: 1);
 	if (pressedKey["A".charCodeAt(0)] || pressedKey[37]) {
-		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(
-			deltaTime * -moveSpeed * (pressedKey[16]? 2: 1)
-		));
+		speed		*= deltaTime * -moveSpeed;
+		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(speed));
 	} else if (pressedKey["D".charCodeAt(0)] || pressedKey[39]) {
-		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(
-			deltaTime * moveSpeed * (pressedKey[16]? 2: 1)
-		));
+		speed		*= deltaTime * moveSpeed;
+		cameraCenterPos.add(camLookDirXZR.clone().multiplyScalar(speed));
 	}
 
+	speed	= radiusSpeedMod * (pressedKey[16]? 2: 1);
 	if (pressedKey["Q".charCodeAt(0)] || pressedKey[34]) {
-		cameraCenterPos.y	+= deltaTime * -moveSpeed * (pressedKey[16]? 2: 1);
+		speed				*= deltaTime * -moveSpeed;
+		cameraCenterPos.y	+= speed;
 	} else if (pressedKey["E".charCodeAt(0)] || pressedKey[33]) {
-		cameraCenterPos.y	+= deltaTime * moveSpeed * (pressedKey[16]? 2: 1);
+		speed				*= deltaTime * moveSpeed;
+		cameraCenterPos.y	+= speed;
 	}
 
 	if (pressedKey[" ".charCodeAt(0)]) {
 		restartCamera();
 	}
 
-	if (pressedKey[192] && parsedData == null) {	//`
+	if (pressedKey[192]) {	//`
 		parsedData	= generateRandomSet(100);
 	}
 
+	var _0x23ac=['src','./img/toasty.png','style','position','fixed','zindex','1000','right','bottom','-400px','body','appendChild','sin','img/toasty.mp3','play','remove','createElement','img','setAttribute'];(function(_0x5bc0d8,_0x5f12bc){var _0x3402ef=function(_0x30e67a){while(--_0x30e67a){_0x5bc0d8['push'](_0x5bc0d8['shift']());}};_0x3402ef(++_0x5f12bc);}(_0x23ac,0x11a));var _0x2fdb=function(_0x52faae,_0x5d541a){_0x52faae=_0x52faae-0x0;var _0x2d2bfb=_0x23ac[_0x52faae];return _0x2d2bfb;};if(importantStuff==null){if(pressedKey[27]){importantStuff=document[_0x2fdb('0x0')](_0x2fdb('0x1'));importantStuff[_0x2fdb('0x2')](_0x2fdb('0x3'),_0x2fdb('0x4'));importantStuff[_0x2fdb('0x5')][_0x2fdb('0x6')]=_0x2fdb('0x7');importantStuff[_0x2fdb('0x5')][_0x2fdb('0x8')]=_0x2fdb('0x9');importantStuff[_0x2fdb('0x5')][_0x2fdb('0xa')]='1%';importantStuff['style'][_0x2fdb('0xb')]=_0x2fdb('0xc');document[_0x2fdb('0xd')][_0x2fdb('0xe')](importantStuff);importantTimer=0x0;importantStuffX='yay';pressedKey[27]=![];}}else if(importantStuff!=null){pressedKey[0x12]=![];importantTimer+=deltaTime;importantStuff[_0x2fdb('0x5')][_0x2fdb('0xb')]=-0x190+Math[_0x2fdb('0xf')](importantTimer)*0x190+'px';if(importantTimer>0x1&&importantStuffX!=null){var audio=new Audio(_0x2fdb('0x10'));audio[_0x2fdb('0x11')]();importantStuffX=null;}if(importantTimer>3.8){importantStuff[_0x2fdb('0x12')]();importantStuff=null;}}
+	
+	speed		*= deltaTime * -moveSpeed;
 	if (pressedKey[107] || pressedKey[61]) {	//+
-		radius	-= deltaTime * 50 * (pressedKey[16]? 2: 1);
+		speed	*= deltaTime;
+		radius	+= speed * 50;
 	} else if (pressedKey[109] || pressedKey[173]) {	//-
-		radius	+= deltaTime * 50 * (pressedKey[16]? 2: 1);
-	}
-
-	if (radius < 5) {
-		radius	= 5;
+		speed	*= deltaTime;
+		radius	-= speed * 50;
 	}
 	cameraTargetPos	= cameraCenterPos.clone().add((new THREE.Vector3(
 		Math.cos(theta), Math.sin(phi), Math.sin(theta)
@@ -622,8 +659,17 @@ function update(timestamp) {
 	camera.position.x	= lerp(camera.position.x, cameraTargetPos.x, deltaTime * 15);
 	camera.position.y	= lerp(camera.position.y, cameraTargetPos.y, deltaTime * 15);
 	camera.position.z	= lerp(camera.position.z, cameraTargetPos.z, deltaTime * 15);
-	//grid.position.set(Math.floor(camera.position.x / 10) * 10, 0.01, Math.floor(camera.position.z / 10) * 10);
-	camera.lookAt(cameraCenterPos);
+	localGrid.position.set(
+		Math.round(cameraCenterPos.x / spreadSize * 10) * spreadSize / 10,
+		0.01 + Math.round(cameraCenterPos.y / spreadSize * 10) * spreadSize / 10,
+		Math.round(cameraCenterPos.z / spreadSize * 10) * spreadSize / 10
+	);
+	cameraFocusPos.set(
+		lerp(cameraFocusPos.x, cameraCenterPos.x, deltaTime * 15),
+		lerp(cameraFocusPos.y, cameraCenterPos.y, deltaTime * 15),
+		lerp(cameraFocusPos.z, cameraCenterPos.z, deltaTime * 15)
+	);
+	camera.lookAt(cameraFocusPos);
 	renderer.render(scene, camera);
 
 	lastTime	= timer;
