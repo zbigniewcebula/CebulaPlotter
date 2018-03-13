@@ -85,14 +85,14 @@ function onMouseWheel(event) {
 function onKeyDown(event) {
 	event			= window.event? window.event: event;
 	pressedKey[event.keyCode]		= true;
-	console.log(event.keyCode);
+	//console.log(event.keyCode);
 }
 function onKeyUp(event) {
 	event			= window.event? window.event: event;
 	pressedKey[event.keyCode]		= false;
 }
 
-function processFile() {
+function processFile(url = false) {
 	var msg	= "";
 	if (loadedFile != null) {
 		addLogEntry("FileUpload", "Loading file...");
@@ -116,10 +116,22 @@ function processFile() {
 		msg		+= "</table>";
 		document.getElementById("upload_info").innerHTML = msg;
 
-		loadedFile.data	= null;
-		var	reader		= new FileReader();
-		reader.onload	= function(e) {
-			loadedFile.data	= e.target.result;
+		if (url == false) {
+			loadedFile.data	= null;
+			var	reader		= new FileReader();
+			reader.onload	= function(e) {
+				loadedFile.data	= e.target.result;
+				var _msg		= document.getElementById("upload_info").innerHTML;
+				_msg			+= "<b>File is ready!!!</b><br />";
+				addLogEntry("FileUpload", "File loaded successfully!");
+				document.getElementById("upload_info").innerHTML	= _msg;
+
+				if (loadedFile.type == "text/plain") {
+					parsedData	= processTXT();
+				}
+			};
+			reader.readAsText(loadedFile);
+		} else {
 			var _msg		= document.getElementById("upload_info").innerHTML;
 			_msg			+= "<b>File is ready!!!</b><br />";
 			addLogEntry("FileUpload", "File loaded successfully!");
@@ -128,8 +140,7 @@ function processFile() {
 			if (loadedFile.type == "text/plain") {
 				parsedData	= processTXT();
 			}
-		};
-		reader.readAsText(loadedFile);
+		}
 	}
 }
 
@@ -154,7 +165,7 @@ function processTXT() {
 					line	= lines[l].split(" ");
 					if (line.length == 6) {
 						var geometry	= new THREE.SphereGeometry(spreadSize / lines.length, 6, 5);
-						var material	= new THREE.MeshLambertMaterial({
+						var material	= new THREE.MeshBasicMaterial({
 							color:	0xFFFFFF
 						});
 						material.color		= new THREE.Color(parseFloat(line[3]), parseFloat(line[4]), parseFloat(line[5]));
@@ -164,20 +175,23 @@ function processTXT() {
 						sphere.position.z	= parseFloat(line[2]) * spreadSize;
 						sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
 
-						var geo				= new THREE.EdgesGeometry(geometry);
-						var mat				= new THREE.LineBasicMaterial({
-							color: 0xffffff,
-							linewidth: 5
-						});
-						var wireframe			= new THREE.LineSegments(geo, mat);
+						/*
+						var wireframe			= new THREE.LineSegments(
+							new THREE.EdgesGeometry(geometry),
+							new THREE.LineBasicMaterial({
+								color: 0xffffff,
+								linewidth: 5
+							})
+						);
 						wireframe.position.x	= sphere.position.x;
 						wireframe.position.y	= sphere.position.y;
 						wireframe.position.z	= sphere.position.z;
 						wireframe.name			= "WIRE_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
+						*/
 
 						tempData.push({
 							mesh:	sphere,
-							wire:	wireframe,
+							wire:	null,///wireframe,
 							added:	false
 						});
 						raycastable.push(sphere);
@@ -261,7 +275,7 @@ function generateRandomSet(amount) {
 	var min			= new Array(3);
 	for(var l = 0; l < amount; ++l) {
 		var geometry	= new THREE.SphereGeometry(spreadSize / amount, 6, 5);
-		var material	= new THREE.MeshLambertMaterial({
+		var material	= new THREE.MeshBasicMaterial({
 			color:	0xFFFFFF
 		});
 		material.color		= new THREE.Color(Math.random(), Math.random(), Math.random());
@@ -271,20 +285,22 @@ function generateRandomSet(amount) {
 		sphere.position.z	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
 		sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
 
-		var geo				= new THREE.EdgesGeometry(geometry);
-		var mat				= new THREE.LineBasicMaterial({
-			color: 0xffffff,
-			linewidth: 5
-		});
-		var wireframe			= new THREE.LineSegments(geo, mat);
+		/*
+		var wireframe			= new THREE.LineSegments(
+			new THREE.EdgesGeometry(geometry),
+			new THREE.LineBasicMaterial({
+				color: 0xffffff,
+				linewidth: 5
+			})
+		);
 		wireframe.position.x	= sphere.position.x;
 		wireframe.position.y	= sphere.position.y;
 		wireframe.position.z	= sphere.position.z;
 		wireframe.name			= "WIRE_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
-
+		*/
 		tempData.push({
 			mesh:	sphere,
-			wire:	wireframe,
+			wire:	null,//wireframe,
 			added:	false
 		});
 		raycastable.push(sphere);
@@ -366,6 +382,28 @@ function onLoadFile(event) {
 	}
 }
 
+function onExternalLoadFile(event) {
+	var	url	= window.prompt("Enter URL of data file: ", "");
+
+	var request = new XMLHttpRequest();
+	request.open('GET', url, true);
+	request.send(null);
+	request.onreadystatechange = function () {
+		if (request.readyState === 4 && request.status === 200) {
+			var type = request.getResponseHeader('Content-Type');
+			if (type.indexOf("text") !== 1) {
+				loadedFile = {
+					type: "text/plain",
+					data: request.responseText,
+					size: request.responseText.length,
+					name: url.substring(url.lastIndexOf("/"))
+				};
+				processFile(true);
+			}
+		}
+	}
+}
+
 function restartCamera() {
 	cameraFocusPos	= new THREE.Vector3(spreadSize / 2, 0, spreadSize / 2);
 	cameraCenterPos.set(spreadSize / 2, 0, spreadSize / 2);
@@ -380,8 +418,8 @@ function clearScene() {
 	if (parsedData != null) {
 		var	obj	= null;
 		for(var i = 0; i < parsedData.length; ++i) {
-			scene.remove(parsedData[i].wire);
-			parsedData[i].wire	= null;
+			//scene.remove(parsedData[i].wire);
+			//parsedData[i].wire	= null;
 
 			parsedData[i].mesh.material.dispose();
 			parsedData[i].mesh.geometry.dispose();
@@ -529,6 +567,8 @@ function init() {
 	//Controls
 	document.getElementById('upload')
 		.addEventListener('change', onLoadFile, false);
+	document.getElementById('url_icon')
+		.addEventListener('click', onExternalLoadFile, false);
 
 
 	//Init message
@@ -555,7 +595,7 @@ function update(timestamp) {
 		for(var i = 0; i < parsedData.length; ++i) {
 			if (parsedData[i].added == false) {
 				scene.add(parsedData[i].mesh);
-				scene.add(parsedData[i].wire);
+				//scene.add(parsedData[i].wire);
 			}
 		}
 	}
