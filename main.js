@@ -170,9 +170,13 @@ function processTXT() {
 						});
 						material.color		= new THREE.Color(parseFloat(line[3]), parseFloat(line[4]), parseFloat(line[5]));
 						var sphere			= new THREE.Mesh(geometry, material);
-						sphere.position.x	= parseFloat(line[0]) * spreadSize;
-						sphere.position.y	= parseFloat(line[1]) * spreadSize;
-						sphere.position.z	= parseFloat(line[2]) * spreadSize;
+
+						var orgPos			= new THREE.Vector3(parseFloat(line[0]), parseFloat(line[1]), parseFloat(line[2]));
+						sphere.orgPos		= orgPos;
+
+						sphere.position.x	= orgPos.x * spreadSize;
+						sphere.position.y	= orgPos.y * spreadSize;
+						sphere.position.z	= orgPos.z * spreadSize;
 						sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
 
 						/*
@@ -199,21 +203,21 @@ function processTXT() {
 						success	+= 1;
 
 						if (success == 1) {
-							max[0]	= sphere.position.x;
-							max[1]	= sphere.position.y;
-							max[2]	= sphere.position.z;
+							max[0]	= orgPos.x;
+							max[1]	= orgPos.y;
+							max[2]	= orgPos.z;
 
-							min[0]	= sphere.position.x;
-							min[1]	= sphere.position.y;
-							min[2]	= sphere.position.z;
+							min[0]	= orgPos.x;
+							min[1]	= orgPos.y;
+							min[2]	= orgPos.z;
 						} else {
-							max[0]	= Math.max(max[0], sphere.position.x);
-							max[1]	= Math.max(max[1], sphere.position.y);
-							max[2]	= Math.max(max[2], sphere.position.z);
+							max[0]	= Math.max(max[0], orgPos.x);
+							max[1]	= Math.max(max[1], orgPos.y);
+							max[2]	= Math.max(max[2], orgPos.z);
 
-							min[0]	= Math.min(min[0], sphere.position.x);
-							min[1]	= Math.min(min[1], sphere.position.y);
-							min[2]	= Math.min(min[2], sphere.position.z);
+							min[0]	= Math.min(min[0], orgPos.x);
+							min[1]	= Math.min(min[1], orgPos.y);
+							min[2]	= Math.min(min[2], orgPos.z);
 						}
 						/*
 						//Debug
@@ -280,9 +284,17 @@ function generateRandomSet(amount) {
 		});
 		material.color		= new THREE.Color(Math.random(), Math.random(), Math.random());
 		var sphere			= new THREE.Mesh(geometry, material);
-		sphere.position.x	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
-		sphere.position.y	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
-		sphere.position.z	= (Math.floor(Math.random() * 1000) / 1000) * spreadSize;
+
+		var orgPos			= new THREE.Vector3(
+			(Math.floor(Math.random() * 1000) / 1000),
+			(Math.floor(Math.random() * 1000) / 1000),
+			(Math.floor(Math.random() * 1000) / 1000)
+		);
+		sphere.orgPos		= orgPos;
+
+		sphere.position.x	= orgPos.x * spreadSize;
+		sphere.position.y	= orgPos.y * spreadSize;
+		sphere.position.z	= orgPos.z * spreadSize;
 		sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
 
 		/*
@@ -308,21 +320,21 @@ function generateRandomSet(amount) {
 		success	+= 1;
 
 		if (success == 1) {
-			max[0]	= sphere.position.x;
-			max[1]	= sphere.position.y;
-			max[2]	= sphere.position.z;
+			max[0]	= orgPos.x;
+			max[1]	= orgPos.y;
+			max[2]	= orgPos.z;
 
-			min[0]	= sphere.position.x;
-			min[1]	= sphere.position.y;
-			min[2]	= sphere.position.z;
+			min[0]	= orgPos.x;
+			min[1]	= orgPos.y;
+			min[2]	= orgPos.z;
 		} else {
-			max[0]	= Math.max(max[0], sphere.position.x);
-			max[1]	= Math.max(max[1], sphere.position.y);
-			max[2]	= Math.max(max[2], sphere.position.z);
+			max[0]	= Math.max(max[0], orgPos.x);
+			max[1]	= Math.max(max[1], orgPos.y);
+			max[2]	= Math.max(max[2], orgPos.z);
 
-			min[0]	= Math.min(min[0], sphere.position.x);
-			min[1]	= Math.min(min[1], sphere.position.y);
-			min[2]	= Math.min(min[2], sphere.position.z);
+			min[0]	= Math.min(min[0], orgPos.x);
+			min[1]	= Math.min(min[1], orgPos.y);
+			min[2]	= Math.min(min[2], orgPos.z);
 		}
 	}
 	addLogEntry("RandomSet", "Generated points: " + amount);
@@ -405,8 +417,8 @@ function onExternalLoadFile(event) {
 }
 
 function restartCamera() {
-	cameraFocusPos	= new THREE.Vector3(spreadSize / 2, 0, spreadSize / 2);
-	cameraCenterPos.set(spreadSize / 2, 0, spreadSize / 2);
+	cameraFocusPos	= new THREE.Vector3(spreadSize / 2, spreadSize / 2, spreadSize / 2);
+	cameraCenterPos.set(spreadSize / 2, spreadSize / 2, spreadSize / 2);
 	theta	= Math.PI / 4;
 	phi		= Math.PI / 4;
 	if (lastLogHash != 0) {
@@ -448,11 +460,11 @@ function processRay(object) {
 	content		+= "<tr>";
 	content		+= "<td></td>";
 	content		+= "<td>X: </td>";
-	content		+= "<td>" + object.position.x + "</td>";
+	content		+= "<td>" + object.orgPos.x + "</td>";
 	content		+= "<td>Y: </td>";
-	content		+= "<td>" + object.position.y + "</td>";
+	content		+= "<td>" + object.orgPos.y + "</td>";
 	content		+= "<td>Z: </td>";
-	content		+= "<td>" + object.position.z + "</td>";
+	content		+= "<td>" + object.orgPos.z + "</td>";
 	content		+= "</tr>";
 
 	content		+= "<tr>";
