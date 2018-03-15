@@ -33,7 +33,9 @@ var mouse	= {
 };
 var pressedKey	= {};
 
-var loadedFile	= null;
+var loadedFile		= null;
+var loadedPalette	= null;
+
 var parsedData	= null;
 var raycastable	= null;
 
@@ -263,6 +265,178 @@ function processTXT() {
 			document.getElementById("parse_info").innerHTML	= _msg;
 			return tempData;
 		}	
+	}
+}
+
+function processGET(data, pal) {
+	var _proc = function() {
+		if (loadedFile != null && loadedPalette != null) {
+			if (loadedFile.data != null && loadedPalette.data != null) {
+				clearScene();
+
+				var	tempPalette		= new Array();
+				loadedPalette.data	= loadedPalette.data.replace(/\t/g, " ");
+				var	lines			= loadedPalette.data.split("\r\n");
+				var line			= null;
+				for(var l = 0; l < lines.length; ++l) {
+					if (lines[l].length > 0) {
+						line	= lines[l].split(" ");
+						if (line.length == 3) {
+							tempPalette.push(
+								new THREE.Color(parseFloat(line[0]), parseFloat(line[1]), parseFloat(line[2]))
+							);
+						}
+					}
+				}
+
+
+				var	tempData	= new Array();
+				raycastable		= new Array();
+
+				loadedFile.data	= loadedFile.data.replace(/\t/g, " ");
+				lines			= loadedFile.data.split("\r\n");
+
+				var	success		= 0;
+				var	fail		= 0;
+				
+				var max			= new Array(3);
+				var min			= new Array(3);
+				for(var l = 0; l < lines.length; ++l) {
+					if (lines[l].length > 0) {
+						line	= lines[l].split(" ");
+						if (line.length == 6) {
+							var geometry	= new THREE.SphereGeometry(spreadSize / lines.length, 6, 5);
+							var material	= new THREE.MeshBasicMaterial({
+								color:	0xFFFFFF
+							});
+							var clrIndex		= parseInt(line[4]);
+							if (clrIndex >= 0 && clrIndex < tempPalette.length) {
+								material.color	= tempPalette[clrIndex];
+							} else {
+								material.color	= new THREE.Color(1, 1, 1);
+							}
+							
+							var sphere			= new THREE.Mesh(geometry, material);
+
+							var orgPos			= new THREE.Vector3(parseFloat(line[0]), parseFloat(line[1]), parseFloat(line[2]));
+							sphere.orgPos		= orgPos;
+
+							sphere.position.x	= orgPos.x * spreadSize;
+							sphere.position.y	= orgPos.y * spreadSize;
+							sphere.position.z	= orgPos.z * spreadSize;
+							sphere.name			= "POINT_" + sphere.position.x + ";" + sphere.position.y + ";" + sphere.position.z;
+
+							tempData.push({
+								mesh:	sphere,
+								wire:	null,///wireframe,
+								added:	false
+							});
+							raycastable.push(sphere);
+
+							success	+= 1;
+
+							if (success == 1) {
+								max[0]	= orgPos.x;
+								max[1]	= orgPos.y;
+								max[2]	= orgPos.z;
+
+								min[0]	= orgPos.x;
+								min[1]	= orgPos.y;
+								min[2]	= orgPos.z;
+							} else {
+								max[0]	= Math.max(max[0], orgPos.x);
+								max[1]	= Math.max(max[1], orgPos.y);
+								max[2]	= Math.max(max[2], orgPos.z);
+
+								min[0]	= Math.min(min[0], orgPos.x);
+								min[1]	= Math.min(min[1], orgPos.y);
+								min[2]	= Math.min(min[2], orgPos.z);
+							}
+							/*
+							//Debug
+							addLogEntry("ProcessingTXT", "Added point: " + l + " => at: ("
+								+ sphere.position.x + "; " + sphere.position.y + "; " + sphere.position.z
+								+ ")"
+							);
+							*/
+						} else {
+							addLogEntry("ProcessingTXT", "Line is corrupted, ignoring...");
+							fail	+= 1;
+						}
+					}
+				}
+				addLogEntry("ProcessingTXT",
+						"Successfully load points: " + success
+					+	", Failed: " + fail
+					+	", Total: " + (success + fail)
+				);
+
+				var	_msg	= "<table>";
+
+				_msg	+= "<tr>";
+				_msg		+= "<td><b>Total amount: </b></td><td><b>" + success + "</b></td></td>";
+				_msg	+= "</tr>";
+				_msg	+= "<tr>";
+				_msg		+= "<td>Failed amount: </b></td><td>" + fail + "</td>";
+				_msg	+= "</tr>";
+				_msg	+= "<tr>";
+				_msg		+= "<td>Success amount: </b></td><td>" + success + "</td>";
+				_msg	+= "</tr>";
+
+				_msg	+= "<tr></tr>";
+
+				_msg	+= "<tr>";
+				_msg		+= "<td>Minimals: </b></td><td>" + min[0] + ";" + min[1] + ";" + min[2] + "</td>";
+				_msg	+= "</tr>";
+				_msg	+= "<tr>";
+				_msg		+= "<td>Maximals: </b></td><td>" + max[0] + ";" + max[1] + ";" + max[2] + "</td>";
+				_msg	+= "</tr>";
+
+				_msg		+= "</table>";
+				document.getElementById("parse_info").innerHTML	= _msg;
+				return tempData;
+			} else {
+				console.log("Data empty!");
+			}	
+		} else {
+			console.log("Files not loaded!");
+		}
+	};
+
+	var request = new XMLHttpRequest();
+	request.open('GET', data, true);
+	request.send(null);
+	request.onreadystatechange = function () {
+		if (request.readyState === 4 && request.status === 200) {
+			var type = request.getResponseHeader('Content-Type');
+			if (type.indexOf("text") !== 1) {
+				loadedFile = {
+					type: "text/plain",
+					data: request.responseText,
+					size: request.responseText.length,
+					name: url.substring(url.lastIndexOf("/"))
+				};
+
+				request = new XMLHttpRequest();
+				request.open('GET', pal, true);
+				request.send(null);
+				request.onreadystatechange = function () {
+					if (request.readyState === 4 && request.status === 200) {
+						var type = request.getResponseHeader('Content-Type');
+						if (type.indexOf("text") !== 1) {
+							loadedPalette = {
+								type: "text/plain",
+								data: request.responseText,
+								size: request.responseText.length,
+								name: url.substring(url.lastIndexOf("/"))
+							};
+
+							_proc();
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -593,6 +767,13 @@ function init() {
 		+	"Shift key makes movement faster!!!<br />"
 	);
 	addLogEntry("Global", "Made by zbigniewcebula (2018)");
+
+	var url_string	= location.href;
+	var url			= new URL(url_string);
+	var params		= url.searchParams;
+	if (params.get("data") != null && params.get("pal") != null) {
+		processGET(params.get("data"), params.get("pal"));
+	}
 }
 
 var deltaTime	= 0;
