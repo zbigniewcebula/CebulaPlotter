@@ -12,37 +12,7 @@ body {
 }
 #logo {
 	width:				100%;
-}
 
-#upload_div {
-	display:			inline-block;
-	width:				15%;
-
-	-webkit-transition-property:		width;
-	-webkit-transition-duration:		0.1s;
-	-webkit-transition-timing-function:	linear;
-	
-	transition-property:				width;
-	transition-duration:				0.1s;
-	transition-timing-function:			linear;
-}
-#upload_div:hover {
-	width:				40%;
-}
-#url_div {
-	display:			inline-block;
-	width:				15%;
-
-	-webkit-transition-property:		width;
-	-webkit-transition-duration:		0.1s;
-	-webkit-transition-timing-function:	linear;
-	
-	transition-property:				width;
-	transition-duration:				0.1s;
-	transition-timing-function:			linear;
-}
-#url_div:hover {
-	width:				40%;
 }
 
 #upload_info {
@@ -85,17 +55,6 @@ body {
 	display:			none;
 }
 
-#upload_div > input {
-	display:			none;
-}
-#upload_icon {
-	z-index:			100;
-	width:				100%;
-}
-#url_icon {
-	z-index:			100;
-	width:				100%;
-}
 #data_div {
 	display:			block;
 	z-index:			100;
@@ -117,6 +76,8 @@ body {
 	width:				40%;
 
 	color:				white;
+
+	text-shadow: 2px 2px #000000;
 }
 
 #controls {
