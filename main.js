@@ -6,6 +6,8 @@ function init() {
 	renderer	= new THREE.WebGLRenderer();
 	camera		= new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight * 0.98), 0.1, 10000);
 	//My funcs setting up scene and stuff
+	cameraCenterPos	= new THREE.Vector3(0, 0, 0);
+	cameraTargetPos	= new THREE.Vector3(0, 0, 0);
 	moveSpeed	= 10;
 	setSpreadSize(20);
 	restartCamera();

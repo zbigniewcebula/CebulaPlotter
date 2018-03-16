@@ -3,7 +3,7 @@
 //Restarts camera :V (sic!)
 function restartCamera() {
 	cameraFocusPos	= new THREE.Vector3(spreadSize / 2, spreadSize / 2, spreadSize / 2);
-	cameraCenterPos.set(spreadSize / 2, spreadSize / 2, spreadSize / 2);
+	cameraCenterPos	= new THREE.Vector3(spreadSize / 2, spreadSize / 2, spreadSize / 2);
 	theta	= Math.PI / 4;
 	phi		= Math.PI / 4;
 
