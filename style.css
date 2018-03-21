@@ -88,3 +88,31 @@ body {
 	width:				25%;
 	color:				white;
 }
+
+
+#colors {
+	z-index:			100;
+	position:			fixed;
+	right:				0%;
+	top:				25%;
+	width:				15%;
+	color:				white;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.framed {
+	border-style:		solid;
+	border-width:		2px;
+	border-color:		black;
+}

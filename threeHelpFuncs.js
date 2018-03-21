@@ -7,7 +7,7 @@ function restartCamera() {
 	theta	= Math.PI / 4;
 	phi		= Math.PI / 4;
 
-	radius	= 20;
+	radius	= 30;
 
 	if (lastLogHash != 0) {
 		addLogEntry("Camera", "Camera position and rotation reset.");
@@ -17,7 +17,7 @@ function restartCamera() {
 //Clears the scene, for the loading purposes
 function clearScene() {
 	if (parsedData != null) {
-		var	obj	= null;
+		var	obj			= null;
 		for(var i = 0; i < parsedData.length; ++i) {
 			parsedData[i].mesh.material.dispose();
 			parsedData[i].mesh.geometry.dispose();
@@ -43,28 +43,16 @@ function processRay(object) {
 	var	content	= "<table>";
 	content		+= "<tr>";
 	content		+= "<td>Position: </td>";
-	content		+= "</tr>";
-	content		+= "<tr>";
-	content		+= "<td></td>";
-	content		+= "<td>X: </td>";
-	content		+= "<td>" + object.orgPos.x + "</td>";
-	content		+= "<td>Y: </td>";
-	content		+= "<td>" + object.orgPos.y + "</td>";
-	content		+= "<td>Z: </td>";
-	content		+= "<td>" + object.orgPos.z + "</td>";
+	content		+= "<td class='framed'>X: " + object.orgPos.x + "</td>";
+	content		+= "<td class='framed'>Y: " + object.orgPos.y + "</td>";
+	content		+= "<td class='framed'>Z: " + object.orgPos.z + "</td>";
 	content		+= "</tr>";
 
 	content		+= "<tr>";
 	content		+= "<td>Color: </td>";
-	content		+= "</tr>";
-	content		+= "<tr>";
-	content		+= "<td></td>";
-	content		+= "<td>X: </td>";
-	content		+= "<td>" + Math.floor(object.material.color.r * 255) + "</td>";
-	content		+= "<td>Y: </td>";
-	content		+= "<td>" + Math.floor(object.material.color.g * 255) + "</td>";
-	content		+= "<td>Z: </td>";
-	content		+= "<td>" + Math.floor(object.material.color.b * 255) + "</td>";
+	content		+= "<td class='framed'>R: " + Math.floor(object.material.color.r * 255) + "</td>";
+	content		+= "<td class='framed'>G: " + Math.floor(object.material.color.g * 255) + "</td>";
+	content		+= "<td class='framed'>B: " + Math.floor(object.material.color.b * 255) + "</td>";
 	content		+= "</tr>";
 
 	content		+= "</table>";

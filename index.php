@@ -25,45 +25,64 @@
 
 	$data	= null;
 	$pal	= null;
+	$gray	= null;
 
 	//Downloading stuff from GET
 	if (isset($_GET["data"]) && isset($_GET["pal"])) {
 		$data	= fileGet($_GET["data"]);
 		$pal	= fileGet($_GET["pal"]);
 	}
+	if (isset($_GET["gray"])) {
+		$gray	= fileGet($_GET["gray"]);
+	}
 ?>
 <!-- Yea and here goes HTML -->
 <!doctype html>
 <html>
 	<head>
+		<!-- ( ͡° ͜ʖ ͡°) -->
 		<meta charset="utf-8">
+		<!-- Damn you cache! -->
+		<meta http-equiv="cache-control" content="max-age=0" />
+		<meta http-equiv="cache-control" content="no-cache" />
+		<meta http-equiv="expires" content="0" />
+		<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+		<meta http-equiv="pragma" content="no-cache" />
+
 		<!-- Me <3 -->
 		<title>CebulaPlotter by zbigniewcebula (2018)</title>
 <?php
 //Passing downloaded date to JS scripts
 echo "<script>";
+echo "var GRAY = null;";
+echo "var DATA = null;";
+echo "var PAL = null;";
+echo "var SIZE = null;";
+echo "var NAME = null;";
 if ($data != null && $pal != null) {
 	$size	= strlen($data);
 	$data	= prepareToParse($data);
 	$pal	= prepareToParse($pal);
 
-	echo "var DATA = new Array();";
+	echo "DATA = new Array();";
 	for($i = 0; $i < count($data); $i += 1) {
 		echo "DATA.push(\"" . $data[$i] . "\");";
 	}
-	echo "var PAL = new Array();";
+	echo "PAL = new Array();";
 	for($i = 0; $i < count($pal); $i += 1) {
 		echo "PAL.push(\"" . $pal[$i] . "\");";
 	}
-	echo "var SIZE = " . $size . ";";
+	echo "SIZE = " . $size . ";";
 	$name	= explode("/", $_GET["data"]);
 	$name	= $name[count($name) - 1];
-	echo "var NAME = \"" . $name . "\";";
-} else {
-	echo "var DATA = null;";
-	echo "var PAL = null;";
-	echo "var SIZE = null;";
-	echo "var NAME = null;";
+	echo "NAME = \"" . $name . "\";";
+}
+if ($gray != null) {
+	$gray	= prepareToParse($gray);
+	echo "GRAY = new Array();";
+	for($i = 0; $i < count($gray); $i += 1) {
+		echo "GRAY.push(\"" . $gray[$i] . "\");";
+	}
 }
 echo "</script>";
 
@@ -119,6 +138,13 @@ echo "</script>";
 				<tr>
 					<td>Scale points:</td><td>&lt;&nbsp;&gt;&nbsp;&nbsp;&nbsp;,&nbsp;.</td>
 				</tr>
+			</table>
+		</div>
+
+		<!-- Color disabling/enabling -->
+		<div id="colors">
+			<table id="colors_table">
+				
 			</table>
 		</div>
 	</body>
