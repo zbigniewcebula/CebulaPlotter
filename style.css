@@ -95,8 +95,10 @@ body {
 	position:			fixed;
 	right:				0%;
 	top:				25%;
-	width:				15%;
+	width:				22%;
 	color:				white;
+
+	font-size:			0.7em;
 }
 
 

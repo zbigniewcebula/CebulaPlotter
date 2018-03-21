@@ -43,8 +43,11 @@ var parsedData		= null;
 var parsedPalette	= null;
 
 	//Collection of raycastable objects
-var raycastable	= null;
+var raycastable		= null;
 	
+	//Mesh from data
+var wireframe		= {};
+
 //Adjustment
 var spreadSize	= 0;
 var	scaleFactor	= 0.1;

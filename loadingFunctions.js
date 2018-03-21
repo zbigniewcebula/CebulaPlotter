@@ -26,8 +26,9 @@ function processData() {		//Name tells everything
 		//Clear scene
 		clearScene();
 
-		var	tempData	= new Array();
-		var tempPal		= new Array();
+		var	tempData		= new Array();
+		var tempPal			= new Array();
+		var tempPalAmount	= new Array();
 
 		//Parsing palette file
 		var line		= null;
@@ -39,6 +40,7 @@ function processData() {		//Name tells everything
 					tempPal.push(
 						new THREE.Color(parseFloat(line[0]), parseFloat(line[1]), parseFloat(line[2]))
 					);
+					tempPalAmount.push(0);
 				} else {
 					addLogEntry("Processing", "Palette file is corrupted, aborting... Line: " + l);
 					return;
@@ -67,7 +69,8 @@ function processData() {		//Name tells everything
 					});
 					var clrIdx			= parseInt(line[3]);
 					if (clrIdx > -1 && clrIdx < tempPal.length) {
-						material.color	= tempPal[clrIdx];
+						material.color			= tempPal[clrIdx];
+						tempPalAmount[clrIdx]	+= 1;
 					} else {
 						material.color	= new THREE.Color(1, 1, 1);
 						clrIdx			= -2;
@@ -118,7 +121,6 @@ function processData() {		//Name tells everything
 		if (GRAY != null) {
 			//Parsing gray data file...
 			lines			= GRAY;
-			console.log(lines.length);
 			for(var l = 0; l < lines.length; ++l) {
 				if (lines[l].length > 0) {
 					line	= lines[l].split(" ");
@@ -196,26 +198,47 @@ function processData() {		//Name tells everything
 
 		//Displaying colors table
 		_msg		= "";
+		_msg		+= "<tr>";
+		_msg 		+= "<td style='text-align: center;'>Index</td>";
+		_msg 		+= "<td style='text-align: center;'>Amount</td>";
+		_msg 		+= "<td style='text-align: center;'><button id='color_all_show' type='button'>Show All</button></td>";
+		_msg		+= "</tr>";
 		for(var i = 0; i < tempPal.length; ++i) {
-			_msg	+= "<tr>";
-			
-			var R	= tempPal[i].r * 255;
-			var G	= tempPal[i].g * 255;
-			var B	= tempPal[i].b * 255;
-			var _R	= 255 - R;
-			var _G	= 255 - G;
-			var _B	= 255 - B;
+			if (tempPalAmount[i] > 0) {
+				_msg	+= "<tr>";
+				
+				var R	= tempPal[i].r * 255;
+				var G	= tempPal[i].g * 255;
+				var B	= tempPal[i].b * 255;
+				var _R	= 255 - R;
+				var _G	= 255 - G;
+				var _B	= 255 - B;
 
-			_msg	+= "<td style='background-color: rgb(" + R + "," + G + "," + B + ");'>"
-			_msg	+= "<input id='color_" + i + "' type='checkbox' checked/>";
-			_msg	+= "</td>";
-			
-			_msg	+= "<td style='color: #FFFFFF; background-color: #000000; text-align: right;'><b>";
-			_msg	+= "&nbsp;&nbsp;&nbsp;" + R + "; " + G + "; " + B;
-			_msg	+= "</b></td>";
-			
-			_msg	+= "</tr>";
+				_msg 	+= "<td style='text-align: center;'>" + i + "</td>";
+				_msg 	+= "<td style='text-align: center;'>" + tempPalAmount[i] + "</td>";
+
+				_msg	+= "<td style='text-align: center; background-color: rgb(" + R + "," + G + "," + B + ");'>"
+				_msg	+= "<input id='color_" + i + "' type='checkbox' checked/>";
+				_msg	+= "</td>";
+				
+				_msg	+= "<td style='color: #FFFFFF; background-color: #000000; text-align: right;";
+				_msg	+= "border-style: solid; border-width: 2px; border-color: rgb(" + R + "," + G + "," + B + ");'><b>";
+				_msg	+= "&nbsp;&nbsp;&nbsp;" + R + "; " + G + "; " + B;
+				_msg	+= "</b></td>";
+
+				_msg	+= "<td><button style='border-style: solid; border-width: 2px; border-color: rgb(" + R + "," + G + "," + B + ");'";
+				_msg	+= "id='mesh_" + i + "' type='button'>Generate/Remove Mesh</button></td>";
+				
+				_msg	+= "</tr>";
+			}
 		}
+		_msg		+= "<tr>";
+		_msg 		+= "<td></td>";
+		_msg 		+= "<td></td>";
+		_msg 		+= "<td style='text-align: center;'><button id='color_all_hide' type='button'>Hide All</button></td>";
+		_msg 		+= "<td></td>";
+		_msg 		+= "<td style='text-align: center;'><button id='mesh_remove_all' type='button'>Remove All Meshes</button></td>";
+		_msg		+= "</tr>";
 
 		document.getElementById("colors_table").innerHTML	= _msg;
 
@@ -225,16 +248,45 @@ function processData() {		//Name tells everything
 
 		//Dynamic disabling and enabling data
 		for(var i = 0; i < tempPal.length; ++i) {
-			//console.log(document.getElementById("color_" + i));
-			document.getElementById("color_" + i).onclick	= function() {
-				var	val = this.checked;
-				var idx	= this.id.substring(6);
-				for(var j = 0; j < parsedData.length; ++j) {
-					if (parsedData[j].mesh.clrIndex == idx) {
-						parsedData[j].mesh.visible	= val;
+			if (document.getElementById("color_" + i) != null) {
+				document.getElementById("color_" + i).onclick	= function() {
+					var	val = this.checked;
+					var idx	= this.id.substring(6);
+					for(var j = 0; j < parsedData.length; ++j) {
+						if (parsedData[j].mesh.clrIndex == idx) {
+							parsedData[j].mesh.visible	= val;
+						}
 					}
+				};
+				document.getElementById("mesh_" + i).onclick	= function() {
+					var idx	= this.id.substring(5);
+					generateMesh(idx);
+				};
+			}
+		}
+
+		document.getElementById("color_all_show").onclick	= function() {
+			for(var j = 0; j < parsedData.length; ++j) {
+				if (document.getElementById("color_" + j) != null) {
+					document.getElementById("color_" + j).checked	= true;
 				}
-			};
+				parsedData[j].mesh.visible	= true;
+			}
+		};
+		document.getElementById("color_all_hide").onclick	= function() {
+			for(var j = 0; j < parsedData.length; ++j) {
+				if (document.getElementById("color_" + j) != null) {
+					document.getElementById("color_" + j).checked	= false;
+				}
+				parsedData[j].mesh.visible	= false;
+			}
+		};
+		document.getElementById("mesh_remove_all").onclick	= function() {
+			for (var key in wireframe) {
+				if (wireframe.hasOwnProperty(key) && wireframe[key] != null) {
+					generateMesh(key);
+				}
+			}
 		}
 
 		//Setting up info of file with data

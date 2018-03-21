@@ -95,6 +95,7 @@ echo "</script>";
 		<script src="events.js"></script>
 		<script src="threeHelpFuncs.js"></script>
 		<script src="loadingFunctions.js"></script>
+		<script src="generateMesh.js"></script>
 		<!-- things have to look fancy -->
 		<link rel="stylesheet" type="text/css" href="./style.css">
 	</head>
