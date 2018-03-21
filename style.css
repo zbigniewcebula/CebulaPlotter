@@ -94,11 +94,11 @@ body {
 	z-index:			100;
 	position:			fixed;
 	right:				0%;
-	top:				25%;
-	width:				22%;
+	bottom:				12%;
+	width:				25%;
 	color:				white;
 
-	font-size:			0.7em;
+	font-size:			0.6em;
 }
 
 

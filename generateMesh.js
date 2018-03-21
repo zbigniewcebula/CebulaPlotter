@@ -10,7 +10,7 @@ function generateMesh(colorIndex) {
 		
 		wireframe[colorIndex]	= null;
 
-		addLogEntry("MeshGeneration", "Removed old mesh! [" + colorIndex + "]" + Math.random());
+		addLogEntry("MeshGeneration", "Removed generated mesh! [" + colorIndex + "]");
 		return;
 	}
 	wireframe[colorIndex]	= null;
