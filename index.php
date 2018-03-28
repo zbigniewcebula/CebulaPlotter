@@ -26,6 +26,24 @@
 	$data	= null;
 	$pal	= null;
 	$gray	= null;
+	$user	= null;
+
+	if (isset($_GET["base"])) {
+		$base = base64_decode($_GET["base"]);
+		$base = json_decode($base, true);
+		if (array_key_exists("data", $base)) {
+			$_GET["data"]	= $base["data"];
+		}
+		if (array_key_exists("pal", $base)) {
+			$_GET["pal"]	= $base["pal"];
+		}
+		if (array_key_exists("gray", $base)) {
+			$_GET["gray"]	= $base["gray"];
+		}
+		if (array_key_exists("user", $base)) {
+			$_GET["user"]	= $base["user"];
+		}
+	}
 
 	//Downloading stuff from GET
 	if (isset($_GET["data"]) && isset($_GET["pal"])) {
@@ -34,6 +52,9 @@
 	}
 	if (isset($_GET["gray"])) {
 		$gray	= fileGet($_GET["gray"]);
+	}
+	if (isset($_GET["user"])) {
+		$user	= $_GET["user"];
 	}
 ?>
 <!-- Yea and here goes HTML -->
@@ -54,6 +75,7 @@
 <?php
 //Passing downloaded date to JS scripts
 echo "<script>";
+echo "var USER = null;";
 echo "var GRAY = null;";
 echo "var DATA = null;";
 echo "var PAL = null;";
@@ -83,6 +105,9 @@ if ($gray != null) {
 	for($i = 0; $i < count($gray); $i += 1) {
 		echo "GRAY.push(\"" . $gray[$i] . "\");";
 	}
+}
+if ($user != null) {
+	echo "USER = '" . $user . "';";
 }
 echo "</script>";
 

@@ -193,6 +193,16 @@ function processData() {		//Name tells everything
 		_msg		+= "<td>Maximals: </b></td><td>" + max[0] + ";" + max[1] + ";" + max[2] + "</td>";
 		_msg	+= "</tr>";
 
+
+		if (USER != null) {
+			_msg	+= "<tr></tr>";
+			_msg	+= "<tr></tr>";
+			_msg	+= "<tr></tr>";
+			_msg	+= "<tr></tr>";
+
+			_msg	+= "<tr><td>User: </td><td>" + USER + "</td></tr>";
+		}
+
 		_msg		+= "</table>";
 		document.getElementById("parse_info").innerHTML	= _msg;
 
